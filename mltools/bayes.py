@@ -146,5 +146,3 @@ class gaussClassify(classifier):
             p = np.exp(-0.5 * np.sum((R*inverse) * R, axis=1)) * constant
         # (vectorized)
         return p
-
-

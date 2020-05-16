@@ -56,8 +56,8 @@ def data_gauss(N0, N1=None, mu0=arr([0, 0]), mu1=arr([1, 1]), sig0=np.eye(2), si
 def data_GMM(N, C, D=2, get_Z=False):
     """Sample data from a Gaussian mixture model.
 
-  Builds a random GMM with C components and draws M data x^{(i)} from a mixture
-    of Gaussians in D dimensions
+	Builds a random GMM with C components and draws M data x^{(i)} from a mixture
+	of Gaussians in D dimensions
 
     Args:
         N (int): Number of data to be drawn from a mixture of Gaussians.
@@ -152,8 +152,8 @@ def data_mouse():
     Each button is its own class (1,2,3); close the window when done creating data.
 
     Returns:
-      X (arr): Mx2 array of data locations
-      Y (arr): Mx1 array of labels (buttons)
+        X (arr): Mx2 array of data locations
+        Y (arr): Mx1 array of labels (buttons)
     """
     import matplotlib.pyplot as plt
     fig = plt.figure()
@@ -173,9 +173,7 @@ def data_mouse():
     fig.canvas.mpl_connect('button_press_event',on_click)
     inter=plt.isinteractive(); hld=plt.ishold();
     plt.ioff(); plt.hold(True); plt.show();
-    if inter:
-        plt.ion()
-    if not hld:
-        plt.hold(False)
+    if inter: plt.ion();
+    if not hld: plt.hold(False);
     return X,Y
 

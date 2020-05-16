@@ -14,7 +14,6 @@ from .utils import toIndex
 ################################################################################
 
 class classifier:
-
     def __init__(self, *args, **kwargs):
         """Constructor for abstract base class for various classifiers.
 
@@ -28,7 +27,7 @@ class classifier:
 
 
     def __call__(self, *args, **kwargs):
-        """Provides syntatic sugar for prediction; calls "predict".    """
+        """Provides syntatic sugar for prediction; calls "predict".  """
         return self.predict(*args, **kwargs)
 
 
@@ -36,43 +35,43 @@ class classifier:
         """Abstract method, implemented by derived classes.
 
         Args:
-                X (arr): M,N array of M data points with N features each
+            X (arr): M,N array of M data points with N features each
 
         Returns:
-                arr: M, or M,1 array of the predicted class for each data point
+            arr: M, or M,1 array of the predicted class for each data point
 
         Derived classes do not need to implement this function if predictSoft is
         implemented; by default it uses predictSoft and converts to the most likely class.
         """
-        idx = np.argmax( self.predictSoft(X) , axis=1 )            # find most likely class (index)
-        return np.asarray(self.classes)[idx]                                 # convert to saved class values
+        idx = np.argmax( self.predictSoft(X) , axis=1 )      # find most likely class (index)
+        return np.asarray(self.classes)[idx]                 # convert to saved class values
 
 
     def predictSoft(self,X):
         """Abstract method, implemented by derived classes.
 
         Args:
-                X (arr): M,N array of M data points with N features each
+            X (arr): M,N array of M data points with N features each
 
         Returns:
-                arr: MxC array of C class probabilities for each data point
+            arr: MxC array of C class probabilities for each data point
         """
         raise NotImplementedError
 
     ####################################################
-    # Standard loss f'n definitions for classifiers        #
+    # Standard loss f'n definitions for classifiers    #
     ####################################################
     def err(self, X, Y):
         """This method computes the error rate on a data set (X,Y)
 
         Args:
-                X (arr): M,N array of M data points with N features each
-                Y (arr): M, or M,1 array of target class values for each data point
+            X (arr): M,N array of M data points with N features each
+            Y (arr): M, or M,1 array of target class values for each data point
 
         Returns:
-                float: fraction of prediction errors, 1/M \sum (Y[i]!=f(X[i]))
+            float: fraction of prediction errors, 1/M \sum (Y[i]!=f(X[i]))
         """
-        Y = arr( Y )
+        Y    = arr( Y )
         Yhat = arr( self.predict(X) )
         return np.mean(Yhat.reshape(Y.shape) != Y)
 
@@ -81,18 +80,18 @@ class classifier:
         """Compute the (average) negative log-likelihood of the soft predictions
 
         Using predictSoft, normalizes and inteprets as conditional probabilities to compute
-            (1/M) \sum_i log Pr[ y^{(i)} | f, x^{(i)} ]
+          (1/M) \sum_i log Pr[ y^{(i)} | f, x^{(i)} ]
 
         Args:
-                X (arr): M,N array of M data points with N features each
-                Y (arr): M, or M,1 array of target class values for each data point
+            X (arr): M,N array of M data points with N features each
+            Y (arr): M, or M,1 array of target class values for each data point
 
         Returns:
-                float: Negative log likelihood of the predictions
+            float: Negative log likelihood of the predictions
         """
         M,N = X.shape
-        P = arr( self.predictSoft(X) )
-        P /= np.sum(P, axis=1, keepdims=True)             # normalize to sum to one
+        P = np.asarray( self.predictSoft(X) )
+        P /= np.sum(P, axis=1, keepdims=True)       # normalize to sum to one
         Y = toIndex(Y, self.classes)
         return - np.mean( np.log( P[ np.arange(M), Y ] ) ) # evaluate
 
@@ -102,33 +101,33 @@ class classifier:
         """Compute the area under the roc curve on the given test data.
 
         Args:
-                X (arr): M,N array of M data points with N features each
-                Y (arr): M, or M,1 array of target class values for each data point
+            X (arr): M,N array of M data points with N features each
+            Y (arr): M, or M,1 array of target class values for each data point
 
         Returns:
-                float: Area under the ROC curve
+            float: Area under the ROC curve
 
         This method only works on binary classifiers.
         """
         if len(self.classes) != 2:
             raise ValueError('This method can only supports binary classification ')
 
-        try:                                    # compute 'response' (soft binary classification score)
-            soft = self.predictSoft(X)[:,1]    # p(class = 2nd)
-        except (AttributeError, IndexError):    # or we can use 'hard' binary prediction if soft is unavailable
+        try:                  # compute 'response' (soft binary classification score)
+            soft = self.predictSoft(X)[:,1]  # p(class = 2nd)
+        except (AttributeError, IndexError):  # or we can use 'hard' binary prediction if soft is unavailable
             soft = self.predict(X)
 
-        n,d = twod(soft).shape                         # ensure soft is the correct shape
+        n,d = twod(soft).shape             # ensure soft is the correct shape
         soft = soft.flatten() if n==1 else soft.T.flatten()
 
-        indices = np.argsort(soft)                 # sort data by score value
+        indices = np.argsort(soft)         # sort data by score value
         Y = Y[indices]
         sorted_soft = soft[indices]
 
         # compute rank (averaged for ties) of sorted data
         dif = np.hstack( ([True],np.diff(sorted_soft)!=0,[True]) )
-        r1 = np.argwhere(dif).flatten()
-        r2 = r1[0:-1] + 0.5*(r1[1:]-r1[0:-1]) + 0.5
+        r1  = np.argwhere(dif).flatten()
+        r2  = r1[0:-1] + 0.5*(r1[1:]-r1[0:-1]) + 0.5
         rnk = r2[np.cumsum(dif[:-1])-1]
 
         # number of true negatives and positives
@@ -146,11 +145,11 @@ class classifier:
         """Estimate the confusion matrix (Y x Y_hat) from test data.
 
         Args:
-                X (arr): M,N array of M data points with N features each
-                Y (arr): M, or M,1 array of target class values for each data point
+            X (arr): M,N array of M data points with N features each
+            Y (arr): M, or M,1 array of target class values for each data point
 
         Returns:
-                C (arr): C[i,j] = # of data from class i that were predicted as class j
+            C (arr): C[i,j] = # of data from class i that were predicted as class j
         """
         Y_hat = self.predict(X)
         num_classes = len(self.classes)
@@ -164,14 +163,14 @@ class classifier:
         """Compute the receiver operating charateristic curve on a data set.
 
         Args:
-                X (arr): M,N array of M data points with N features each
-                Y (arr): M, or M,1 array of target class values for each data point
+            X (arr): M,N array of M data points with N features each
+            Y (arr): M, or M,1 array of target class values for each data point
 
         Returns:
-                tuple : (fpr,tpr,tnr) where
-                                fpr = false positive rate (1xN numpy vector)
-                                tpr = true positive rate (1xN numpy vector)
-                                tnr = true negative rate (1xN numpy vector)
+            tuple : (fpr,tpr,tnr) where
+                    fpr = false positive rate (1xN numpy vector)
+                    tpr = true positive rate (1xN numpy vector)
+                    tnr = true negative rate (1xN numpy vector)
 
         This method is only defined for binary classifiers.
         Plot fpr vs. tpr to see the ROC curve.
@@ -180,10 +179,10 @@ class classifier:
         if len(self.classes) > 2:
             raise ValueError('This method can only supports binary classification ')
 
-        try:                                    # compute 'response' (soft binary classification score)
-            soft = self.predictSoft(X)[:,1]    # p(class = 2nd)
+        try:                  # compute 'response' (soft binary classification score)
+            soft = self.predictSoft(X)[:,1]  # p(class = 2nd)
         except (AttributeError, IndexError):
-            soft = self.predict(X)                # or we can use 'hard' binary prediction if soft is unavailable
+            soft = self.predict(X)        # or we can use 'hard' binary prediction if soft is unavailable
         n,d = twod(soft).shape
 
         if n == 1:
@@ -230,29 +229,28 @@ class regressor:
             return self.train(*args, **kwargs)
 
 
-
     def __call__(self, *args, **kwargs):
-        """Syntatic sugar for prediction; same as "predict".    """
+        """Syntatic sugar for prediction; same as "predict".  """
         return self.predict(*args, **kwargs)
 
 
 
     ####################################################
-    # Standard loss f'n definitions for regressors         #
+    # Standard loss f'n definitions for regressors     #
     ####################################################
     def mae(self, X, Y):
         """Computes the mean absolute error
 
         Computes
-            (1/M) \sum_i | f(x^{(i)}) - y^{(i)} |
+          (1/M) \sum_i | f(x^{(i)}) - y^{(i)} |
         of a regression model f(.) on test data X and Y.
 
         Args:
-            X (arr): M x N array that contains M data points with N features
-            Y (arr): M x 1 array of target values for each data point
+          X (arr): M x N array that contains M data points with N features
+          Y (arr): M x 1 array of target values for each data point
 
         Returns:
-            float: mean absolute error
+          float: mean absolute error
         """
         Yhat = self.predict(X)
         return np.mean(np.absolute(Y - Yhat.reshape(Y.shape)), axis=0)
@@ -262,15 +260,15 @@ class regressor:
         """Computes the mean squared error
 
         Computes
-            (1/M) \sum_i ( f(x^{(i)}) - y^{(i)} )^2
+          (1/M) \sum_i ( f(x^{(i)}) - y^{(i)} )^2
         of a regression model f(.) on test data X and Y.
 
         Args:
-            X (arr): M x N array that contains M data points with N features
-            Y (arr): M x 1 array of target values for each data point
+          X (arr): M x N array that contains M data points with N features
+          Y (arr): M x 1 array of target values for each data point
 
         Returns:
-            float: mean squared error
+          float: mean squared error
         """
         Yhat = self.predict(X)
         return np.mean( (Y - Yhat.reshape(Y.shape))**2 , axis=0)
@@ -280,15 +278,15 @@ class regressor:
         """Computes the root mean squared error
 
         Computes
-            sqrt( f.mse(X,Y) )
+          sqrt( f.mse(X,Y) )
         of a regression model f(.) on test data X and Y.
 
         Args:
-            X (arr): M x N array that contains M data points with N features
-            Y (arr): M x 1 array of target values for each data point
+          X (arr): M x N array that contains M data points with N features
+          Y (arr): M x 1 array of target values for each data point
 
         Returns:
-            float: root mean squared error
+          float: root mean squared error
         """
         return np.sqrt(self.mse(X, Y))
 
